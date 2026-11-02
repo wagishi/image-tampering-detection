@@ -5,18 +5,19 @@ A deep-learning project that classifies images into two dataset classes (authent
 ## Repository contents
 
 - `image_tampering_detection.py`: original Colab-generated training notebook export.
-- `training/train_and_export.py`: reproducible transfer-learning training script that exports artifacts for the API.
-- `backend/`: FastAPI inference service for single-image predictions.
+- `training/train_and_export.py`: reproducible transfer-learning training script that exports model artifacts.
+- `backend/`: FastAPI inference service and shared prediction pipeline.
+- `streamlit_app.py`: public-facing Streamlit image-upload website.
 
 ## Model and dataset
 
-The model uses VGG19 without its ImageNet classification head, followed by Flatten, Dense(256, ReLU), Dropout(0.5), and a sigmoid output. The export training script initializes VGG19 with ImageNet weights and freezes the convolutional backbone while training the classification head.
+The export model uses VGG19 with ImageNet weights and its ImageNet classification head removed, followed by Flatten, Dense(256, ReLU), Dropout(0.5), and a sigmoid output. The convolutional backbone is frozen while the classification head is trained.
 
 The dataset directory must contain exactly two class subdirectories. Keras assigns numeric labels alphabetically; the script saves this mapping to `class_indices.json`. Do not assume which label is authentic or tampered—check the saved mapping.
 
 ## Train and export
 
-Install TensorFlow and the training dependencies in your Python environment. Set `DATASET_DIR` to the directory containing the two class folders.
+The web app needs a trained model artifact. Install the training dependencies and set `DATASET_DIR` to the directory containing the two class folders.
 
 PowerShell:
 
@@ -37,38 +38,51 @@ The script writes:
 - `backend/models/model.keras`
 - `backend/models/class_indices.json`
 
-Model artifacts are excluded from Git by `backend/.gitignore`; keep large trained weights local or distribute them through an appropriate model-artifact host. The API cannot perform real inference until both files are present.
+Model artifacts are excluded from Git by `backend/.gitignore`. Upload these two artifacts to your deployment using Streamlit secrets / a private model-artifact host, or temporarily commit them only if their size and dataset licensing permit. The website displays a setup message until both files are available.
 
 ### Important note about the original training script
 
-The original `image_tampering_detection.py` initializes VGG19 with `weights=None` and freezes it. That means its random feature-extractor weights are not updated. It also uses `rescale=1./255` and does not export a model. The new export script is a separate, corrected transfer-learning path and uses `tf.keras.applications.vgg19.preprocess_input`, matching the API inference pipeline. The original file is preserved.
+The original `image_tampering_detection.py` initializes VGG19 with `weights=None` and freezes it. That means its random feature-extractor weights are not updated. It also uses `rescale=1./255` and does not export a model. The new export script is a separate transfer-learning path and uses `tf.keras.applications.vgg19.preprocess_input`, matching the inference pipeline. The original file is preserved.
+
+## Deploy the website (Streamlit Community Cloud)
+
+1. Push or merge the `feature/image-forensics-web-app` branch.
+2. Open [Streamlit Community Cloud](https://share.streamlit.io/) and choose **Create app**.
+3. Select this repository, the branch containing the website, and set the main file path to `streamlit_app.py`.
+4. Ensure the trained files `backend/models/model.keras` and `backend/models/class_indices.json` are available at those paths in the app runtime.
+5. Deploy. The first build can take several minutes because TensorFlow is a large dependency.
+
+The website accepts JPEG and PNG images up to 5 MiB. Images are processed in memory for inference; the app does not intentionally save uploaded images.
+
+## Run the website locally
+
+Use Python 3.10 or 3.11:
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
 
 ## Run the API locally
 
-Python 3.10 or 3.11 is recommended. From the repository root:
+From the repository root:
 
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
+```bash
 pip install -r backend/requirements.txt
 uvicorn main:app --app-dir backend --reload
 ```
-
-On Linux/macOS, activate with `source .venv/bin/activate`.
 
 Open the interactive API docs at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
 ## API endpoints
 
-### `GET /` and `GET /health`
+- `GET /` and `GET /health`: service status.
+- `POST /predict`: upload one JPEG or PNG image as multipart form data using the `file` field. Maximum upload size defaults to 5 MiB.
 
-Return service status.
-
-### `POST /predict`
-
-Upload one JPEG or PNG image as multipart form data using the `file` field. Maximum upload size defaults to 5 MiB.
-
-Example response shape:
+Example response shape (illustrative only):
 
 ```json
 {
@@ -86,8 +100,6 @@ Example response shape:
 }
 ```
 
-The values above are illustrative, not measured model results. The returned class names come from the saved mapping.
-
 ## Limitations and responsible interpretation
 
 - This is a binary image classifier, not a forensic guarantee.
@@ -98,4 +110,4 @@ The values above are illustrative, not measured model results. The returned clas
 
 ## Tech stack
 
-Python, TensorFlow/Keras, VGG19, FastAPI, Pillow, NumPy, Uvicorn.
+Python, TensorFlow/Keras, VGG19, Streamlit, FastAPI, Pillow, NumPy, Uvicorn.
