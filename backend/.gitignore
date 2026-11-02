@@ -1,0 +1,8 @@
+# Model artifacts can be large and should not be committed by default.
+models/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
