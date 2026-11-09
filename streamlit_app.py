@@ -92,7 +92,7 @@ with right:
     if run and uploaded is not None:
         if not MODEL_PATH.is_file() or not CLASS_MAP_PATH.is_file():
             st.error("The model is not deployed yet. Add backend/models/model.keras and backend/models/class_indices.json to the deployment, then restart the app.")
-            st.info("The trained model files are intentionally excluded from Git. Train and export the model using training/train_and_export.py before deploying.")
+            st.info("Your trained model can be packaged without retraining. Follow the existing-model instructions in README.md, then provide model.keras, class_indices.json, and model_config.json to the deployment.")
         else:
             with st.spinner("Running image analysis…"):
                 try:
