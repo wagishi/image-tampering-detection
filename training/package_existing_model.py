@@ -66,7 +66,7 @@ def main() -> None:
         encoding="utf-8",
     )
     (OUTPUT_DIR / "model_config.json").write_text(
-        json.dumps({"image_size": [224, 224], "preprocessing": args.preprocessing}, indent=2) + "\\n",
+        json.dumps({"image_size": [224, 224], "preprocessing": args.preprocessing}, indent=2) + "\n",
         encoding="utf-8",
     )
 
