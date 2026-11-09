@@ -62,7 +62,7 @@ def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     model.save(OUTPUT_DIR / "model.keras")
     (OUTPUT_DIR / "class_indices.json").write_text(
-        json.dumps({args.class_0_name: 0, args.class_1_name: 1}, indent=2) + "\\n",
+        json.dumps({args.class_0_name: 0, args.class_1_name: 1}, indent=2) + "\n",
         encoding="utf-8",
     )
     (OUTPUT_DIR / "model_config.json").write_text(
