@@ -15,9 +15,21 @@ The export model uses VGG19 with ImageNet weights and its ImageNet classificatio
 
 The dataset directory must contain exactly two class subdirectories. Keras assigns numeric labels alphabetically; the script saves this mapping to `class_indices.json`. Do not assume which label is authentic or tampered—check the saved mapping.
 
-## Train and export
+## Use an existing trained model (no retraining required)
 
-The web app needs a trained model artifact. Install the training dependencies and set `DATASET_DIR` to the directory containing the two class folders.
+If you already trained a TensorFlow/Keras model, package it directly. Install the backend dependencies, then run this from the repository root (replace the model path and labels with the values from your actual training run):
+
+```bash
+python training/package_existing_model.py --model /path/to/your_model.h5 --class-0-name authentic --class-1-name tampered --preprocessing vgg19
+```
+
+On Windows PowerShell, use a quoted path such as `C:\\Users\\you\\Downloads\\your_model.h5`. The class names must be the exact semantic labels assigned to sigmoid output indices 0 and 1 during training; never guess them. Choose `--preprocessing` to match training exactly: `vgg19` for `tf.keras.applications.vgg19.preprocess_input`, `rescale_0_1` for division by 255, or `none` for raw RGB values.
+
+The packaging script validates the input/output shapes, runs a basic model smoke test, and writes `backend/models/model.keras`, `class_indices.json`, and `model_config.json`. It does not retrain the model or prove that the class mapping is semantically correct.
+
+## Train a new model (optional)
+
+Only use this section if you want to reproduce training. Install the training dependencies and set `DATASET_DIR` to the directory containing the two class folders.
 
 PowerShell:
 
@@ -37,6 +49,7 @@ The script writes:
 
 - `backend/models/model.keras`
 - `backend/models/class_indices.json`
+- `backend/models/model_config.json` (input size and preprocessing used during training)
 
 Model artifacts are excluded from Git by `backend/.gitignore`. Upload these two artifacts to your deployment using Streamlit secrets / a private model-artifact host, or temporarily commit them only if their size and dataset licensing permit. The website displays a setup message until both files are available.
 
@@ -49,7 +62,7 @@ The original `image_tampering_detection.py` initializes VGG19 with `weights=None
 1. Push or merge the `feature/image-forensics-web-app` branch.
 2. Open [Streamlit Community Cloud](https://share.streamlit.io/) and choose **Create app**.
 3. Select this repository, the branch containing the website, and set the main file path to `streamlit_app.py`.
-4. Ensure the trained files `backend/models/model.keras` and `backend/models/class_indices.json` are available at those paths in the app runtime.
+4. Ensure `backend/models/model.keras`, `backend/models/class_indices.json`, and `backend/models/model_config.json` are available at those paths in the app runtime. These artifacts are ignored by Git; use a secure model-artifact host or your deployment's supported secret/storage mechanism rather than committing large weights.
 5. Deploy. The first build can take several minutes because TensorFlow is a large dependency.
 
 The website accepts JPEG and PNG images up to 5 MiB. Images are processed in memory for inference; the app does not intentionally save uploaded images.
