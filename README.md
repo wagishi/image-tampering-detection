@@ -51,7 +51,7 @@ The script writes:
 - `backend/models/class_indices.json`
 - `backend/models/model_config.json` (input size and preprocessing used during training)
 
-Model artifacts are excluded from Git by `backend/.gitignore`. Upload these two artifacts to your deployment using Streamlit secrets / a private model-artifact host, or temporarily commit them only if their size and dataset licensing permit. The website displays a setup message until both files are available.
+Model artifacts are excluded from Git by `backend/.gitignore`. Upload these three artifacts to your deployment using Streamlit secrets / a private model-artifact host, or temporarily commit them only if their size and dataset licensing permit. The website displays a setup message until both files are available.
 
 ### Important note about the original training script
 
