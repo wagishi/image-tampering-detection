@@ -124,5 +124,8 @@ model.save(output_dir / "model.keras")
 with (output_dir / "class_indices.json").open("w", encoding="utf-8") as f:
     json.dump(train_generator.class_indices, f, indent=2)
 
-print(f"Saved model and class mapping to: {output_dir}")
+with (output_dir / "model_config.json").open("w", encoding="utf-8") as f:
+    json.dump({"image_size": [224, 224], "preprocessing": "vgg19"}, f, indent=2)
+
+print(f"Saved model, class mapping, and preprocessing config to: {output_dir}")
 print(f"Class mapping: {train_generator.class_indices}")
